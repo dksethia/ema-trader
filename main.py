@@ -84,8 +84,6 @@ if __name__ == "__main__":
 
     # Trading loop
     while True:
-        time.sleep(1)
-
         if client.df is None:
             continue
 
@@ -100,9 +98,9 @@ if __name__ == "__main__":
         if open_position is None:
             """ Strategy:
 
-            1. Check if conversion has crossed above base
+            1. Check if conversion line has crossed above base line
             2. If true, check if price is above ema
-            3. If true, open long and close when price closes below conversion
+            3. If true, open long and close when price closes below conversion line
 
             (Opposite for shorts)
             """
