@@ -1,1 +1,1 @@
-"# ema-trader" 
+# ema-trader
