@@ -56,9 +56,14 @@ if __name__ == "__main__":
     arg_parser.add_argument('--senkou', default=52, type=int, help="Period of Senkou Span B")
     args = arg_parser.parse_args()
 
-    symbol = args.symbol
+    # symbol = args.symbol
+    symbol = "SBTCSUSDT"
     timeframe = f"candle{args.timeframe}"
-    order_symbol = f"{symbol}_UMCBL"
+    # order_symbol = f"{symbol}_UMCBL"
+    order_symbol = "SBTCSUSDT_SUMCBL"
+    margin_coin = "SUSDT"
+    # order_size = "0.001"
+    order_size = "0.1"
 
     leverage = 20
 
@@ -84,6 +89,8 @@ if __name__ == "__main__":
 
     # Trading loop
     while True:
+        time.sleep(0.1)
+
         if client.df is None:
             continue
 
@@ -109,18 +116,18 @@ if __name__ == "__main__":
             if (tenkan[-3] <= kijun[-3]) and (tenkan[-2] > kijun[-2]):
                 print("bullish cross")
                 # Check if last close was above ema
-                if client.df["C"][-2] >= ema4[-2]:
-                    print("price above ema, opening long...")
+                if (client.df["C"][-2] >= ema4[-2]) and (client.df["C"][-2] >= tenkan[-2]):
+                    print("price above ema and tenkan, opening long...")
                     # Set hard stop to 10% loss (arbitrary number)
                     hard_stop = str(round(client.df["C"][-2] * (1 - (0.1 / leverage))))
 
-                    res = orderApi.place_order(order_symbol, "USDT", "0.001", "open_long", "market", presetStopLossPrice=hard_stop)
+                    res = orderApi.place_order(order_symbol, margin_coin, order_size, "open_long", "market", presetStopLossPrice=hard_stop)
 
                     if res.get("msg") == "success":
                         open_position = {
                             "order_symbol": order_symbol,
-                            "margin_coin": "USDT",
-                            "position_size": "0.001",
+                            "margin_coin": margin_coin,
+                            "position_size": order_size,
                             "side": "long"
                         }
                     else:
@@ -133,18 +140,18 @@ if __name__ == "__main__":
             elif (tenkan[-3] >= kijun[-3]) and (tenkan[-2] < kijun[-2]):
                 print("bearish cross")
                 # Check if last close was below ema
-                if client.df["C"][-2] <= ema4[-2]:
-                    print("price below ema, opening short...")
+                if (client.df["C"][-2] <= ema4[-2]) and (client.df["C"][-2] <= tenkan[-2]):
+                    print("price below ema and tenkan, opening short...")
                     # Set hard stop to 10% loss (arbitrary number)
                     hard_stop = str(round(client.df["C"][-2] * (1 + (0.1 / leverage))))
 
-                    res = orderApi.place_order(order_symbol, "USDT", "0.001", "open_short", "market", presetStopLossPrice=hard_stop)
+                    res = orderApi.place_order(order_symbol, margin_coin, order_size, "open_short", "market", presetStopLossPrice=hard_stop)
 
                     if res.get("msg") == "success":
                         open_position = {
                             "order_symbol": order_symbol,
-                            "margin_coin": "USDT",
-                            "position_size": "0.001",
+                            "margin_coin": margin_coin,
+                            "position_size": order_size,
                             "side": "short"
                         }
                     else:
@@ -154,7 +161,8 @@ if __name__ == "__main__":
                     print("price above ema, no action taken")
 
             else:
-                print("nothing to see here...")
+                pass
+                # print("nothing to see here...")
 
         # If already in a position
         else:
@@ -167,18 +175,22 @@ if __name__ == "__main__":
 
             if open_position["side"] == "long":
                 if client.df["C"][-2] < tenkan[-2]:
+                    print("close: ", client.df["C"][-2], ", tenkan: ", tenkan[-2])
                     res = orderApi.place_order(order_symbol, open_position["margin_coin"], open_position["position_size"], "close_long", "market")
 
                     if res.get("msg") == "success":
+                        print("position closed")
                         open_position = None
                     else:
                         print("ERROR: position was not closed")
 
             elif open_position["side"] == "short":
                 if client.df["C"][-2] > tenkan[-2]:
+                    print("close: ", client.df["C"][-2], ", tenkan: ", tenkan[-2])
                     res = orderApi.place_order(order_symbol, open_position["margin_coin"], open_position["position_size"], "close_short", "market")
 
                     if res.get("msg") == "success":
+                        print("position closed")
                         open_position = None
                     else:
                         print("ERROR: position was not closed")
