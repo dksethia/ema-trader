@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     # Trading loop
     while True:
-        time.sleep(0.1)
+        # time.sleep(1) # For testing
 
         if client.df is None:
             continue
